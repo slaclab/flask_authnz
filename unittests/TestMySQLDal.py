@@ -8,6 +8,11 @@ sys.path.append('..')
 from flask_authnz.mysql_dal import MySQLRoles 
 
 logger = logging.getLogger(__name__)
+
+'''
+Test some aspects of the DAL DB.
+Note this does not test the SQL queries themselves or the group membership functions. 
+'''
     
 
 class MockDBConnection(object):
