@@ -1,0 +1,25 @@
+package:
+  name: flask_mysql_util
+  version: "0.0.2"
+
+source:
+  git_url: https://github.com/slaclab/flask_mysql_util.git
+  git_tag: "0.0.2"
+
+build:
+  script:
+    - pip install --no-deps --disable-pip-version-check .
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - pymysql
+  run:
+    - python
+    - setuptools
+    - pymysql
+
+about:
+  home: https://github.com/slaclab/flask_mysql_util
+  license: MIT License
