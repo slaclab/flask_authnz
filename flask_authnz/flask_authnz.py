@@ -106,8 +106,6 @@ class FlaskAuthnz(object):
         """
         user_id = self.get_current_user_id()
         role_fq_name = self.application_name + "/" + application_role
-        # Use a negation to store experiments for which we know we do not have permission.
-        not_role_fq_name = "NOT_" + self.application_name + "/" + application_role
         session_app_roles = session.get(self.session_roles_name, {})
         if role_fq_name in session_app_roles:
             logger.info("Found fq_name %s in session for user %s" % (role_fq_name, user_id))
@@ -119,18 +117,6 @@ class FlaskAuthnz(object):
                 # Caller did not specify experiment id; so presence of the fq_name is enough for authorization.
                 logger.info("Caller did not specify experiment id but we found fq_name %s in session for user %s" % (role_fq_name, user_id))
                 return True                    
-        
-        if not_role_fq_name in session_app_roles:
-            logger.info("Found the negation of fq_name %s in session for user %s" % (not_role_fq_name, user_id))
-            if experiment_id:
-                if experiment_id in session_app_roles[not_role_fq_name]:
-                    logger.info("Found experiment id %s in negation for  application role %s in session for user %s" % (experiment_id, not_role_fq_name, user_id))
-                    return False
-            else:
-                # Caller did not specify experiment id; so presence of the fq_name is enough for authorization.
-                logger.info("Caller did not specify experiment id but we found negation fq_name %s in for user %s" % (not_role_fq_name, user_id))
-                return False                    
-            
         
         if self.roles_dal.has_slac_user_role(user_id,
                                                  self.application_name,
@@ -146,11 +132,6 @@ class FlaskAuthnz(object):
             return True
         else:
             logger.info("Did not find application role %s for experiment id %s in db for user %s" % (role_fq_name, experiment_id, user_id))
-            if not_role_fq_name not in session_app_roles:
-                session_app_roles[not_role_fq_name] = []
-            if experiment_id and experiment_id not in session_app_roles[not_role_fq_name]:
-                session_app_roles[not_role_fq_name].append(experiment_id)
-            session[self.session_roles_name] = session_app_roles
             return False
             
         return False
