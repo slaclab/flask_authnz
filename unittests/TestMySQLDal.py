@@ -11,15 +11,16 @@ logger = logging.getLogger(__name__)
     
 
 class MockDBConnection(object):
-    ''' Mocks a database connection. We simply look up using the query statement.'''
-    def __init__(self, queryresp):
+    ''' Mocks a database connection. We simply look up the answer using function that determines the key.'''
+    def __init__(self, queryresp, keyfn):
         self.queryresp = queryresp
+        self.keyfn = keyfn
     def connect(self):
         return self
     def execute(self, statement, params):
         self.returnval = None # Do this right at the very first step...
         logger.debug("Executing statement %s with params %s", statement, params)
-        self.returnval = self.queryresp.get(statement, None)
+        self.returnval = self.queryresp.get(self.keyfn(statement, params), None)
         return self
     def fetchall(self):
         return self.returnval
@@ -30,7 +31,9 @@ class MockDBConnection(object):
 
 class TestMySQLDal(unittest.TestCase):
     def test_group_has_editor(self):
-        dbConn = MockDBConnection({MySQLRoles.QUERY_SELECT_GROUPS_WITH_ROLE_FOR_APP_EXP : [{'group_id': 'ps-editor'}, {'group_id': 'ps-sci'}]})
+        dbConn = MockDBConnection({
+            MySQLRoles.QUERY_SELECT_GROUPS_WITH_ROLE_FOR_APP_EXP : [{'group_id': 'ps-editor'}, {'group_id': 'ps-sci'}]
+            }, lambda statement, params : statement)
         dal = MySQLRoles(dbConn)
         with patch.object(dal, 'get_user_posix_groups') as mocked_method:
             mocked_method.return_value=['ps-editor', 'ps-readonly']
@@ -39,7 +42,9 @@ class TestMySQLDal(unittest.TestCase):
             mocked_method.return_value=['ps-readonly']
             self.assertFalse(dal.has_slac_user_role(user_id="ReadOnlyUser", application_name="LogBook", user_role="Editor", experiment_id=100));
         logger.debug("Test without experiment id")
-        dbConn = MockDBConnection({MySQLRoles.QUERY_SELECT_GROUPS_WITH_ROLE_FOR_APP : [{'group_id': 'ps-editor'}, {'group_id': 'ps-sci'}]})
+        dbConn = MockDBConnection({
+            MySQLRoles.QUERY_SELECT_GROUPS_WITH_ROLE_FOR_APP : [{'group_id': 'ps-editor'}, {'group_id': 'ps-sci'}]
+            }, lambda statement, params : statement)
         dal = MySQLRoles(dbConn)
         with patch.object(dal, 'get_user_posix_groups') as mocked_method:
             mocked_method.return_value=['ps-editor', 'ps-readonly']
