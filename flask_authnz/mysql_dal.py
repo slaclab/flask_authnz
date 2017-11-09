@@ -97,7 +97,7 @@ class MySQLRoles(object):
     
     QUERY_SELECT_USER_WITH_ROLE_FOR_APP_EXP = """
         SELECT
-            *
+            users.user as user
         FROM
             user users
         INNER JOIN
@@ -111,7 +111,7 @@ class MySQLRoles(object):
 
     QUERY_SELECT_USER_WITH_ROLE_FOR_APP = """
             SELECT
-                *
+                users.user as user
             FROM
                 user users
             INNER JOIN
