@@ -31,6 +31,7 @@ class MockDBConnection(object):
 
 class TestMySQLDal(unittest.TestCase):
     def test_group_has_editor(self):
+        ''' Test if the user is assigned a role based on group membership''' 
         dbConn = MockDBConnection({
             MySQLRoles.QUERY_SELECT_GROUPS_WITH_ROLE_FOR_APP_EXP : [{'group_id': 'ps-editor'}, {'group_id': 'ps-sci'}]
             }, lambda statement, params : statement)
@@ -53,6 +54,21 @@ class TestMySQLDal(unittest.TestCase):
             mocked_method.return_value=['ps-readonly']
             self.assertFalse(dal.has_slac_user_role(user_id="ReadOnlyUser", application_name="LogBook", user_role="Editor"));
     
+    def test_user_has_editor(self):
+        ''' Test if the user is assigned a role based on an entry with the userid''' 
+        dbConn = MockDBConnection({
+            (MySQLRoles.QUERY_SELECT_USER_WITH_ROLE_FOR_APP_EXP, 'PowerUser') : ['PowerUser'],
+            (MySQLRoles.QUERY_SELECT_USER_WITH_ROLE_FOR_APP_EXP, 'ReadOnlyUser') : [],
+            (MySQLRoles.QUERY_SELECT_GROUPS_WITH_ROLE_FOR_APP_EXP, '') : []
+            }, lambda statement, params : (statement, params.get('user', '')))
+        dal = MySQLRoles(dbConn)
+        with patch.object(dal, 'get_user_posix_groups') as mocked_method:
+            mocked_method.return_value=['ps-editor', 'ps-readonly']
+            self.assertTrue(dal.has_slac_user_role(user_id="PowerUser", application_name="LogBook", user_role="Editor", experiment_id=100));
+        with patch.object(dal, 'get_user_posix_groups') as mocked_method:
+            mocked_method.return_value=['ps-readonly']
+            self.assertFalse(dal.has_slac_user_role(user_id="ReadOnlyUser", application_name="LogBook", user_role="Editor", experiment_id=100));
+
 if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestMySQLDal)
     unittest.TextTestRunner(verbosity=2).run(suite)
