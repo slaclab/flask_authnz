@@ -1,10 +1,10 @@
 package:
-  name: flask_mysql_util
-  version: "0.0.2"
+  name: flask_authzn
+  version: "0.0.1"
 
 source:
-  git_url: https://github.com/slaclab/flask_mysql_util.git
-  git_tag: "0.0.2"
+  git_url: https://github.com/slaclab/flask_authzn.git
+  git_tag: "0.0.1"
 
 build:
   script:
@@ -14,12 +14,10 @@ requirements:
   build:
     - python
     - setuptools
-    - pymysql
   run:
     - python
     - setuptools
-    - pymysql
 
 about:
-  home: https://github.com/slaclab/flask_mysql_util
+  home: https://github.com/slaclab/flask_authzn
   license: MIT License
