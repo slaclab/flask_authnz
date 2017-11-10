@@ -33,6 +33,6 @@ def processing_definitions(experiment_id):
 - The application will load and cache the privileges -> role mapping on startup.
 - When an authorization request is made, we get a set of roles for the user and a set of roles that contain this privilege. The user is authorized if the intersection of these two sets is non-empty.
 
-#### Basic Usage.
+#### Running the tests.
 To run the unittests, use `python -m unittests.runTests` from the root folder.
 
