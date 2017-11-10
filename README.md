@@ -7,9 +7,10 @@ This utility supplies a couple of decorators that are used for PCDS authenticati
 In your Flask context object create a DAL and a security object passing it the application name (in the example, _LogBook_)  
 ```
 from flask_mysql_util import MultiMySQL
-from flask_authnz import FlaskAuthnz, UserGroups
-roles_db = MySQLRoles(MultiMySQL(prefix="ROLES"), UserGroups())
-security = FlaskAuthnz(roles_db, "LogBook")
+from flask_authnz import FlaskAuthnz, MySQLRoles, UserGroups
+
+roles_db = MultiMySQL(prefix="ROLES")
+security = FlaskAuthnz(MySQLRoles(roles_db, UserGroups()), "LogBook")
 ```
 
 As this uses the MySQL database for roles, you'd need to set up your environment accordingly (see the documentation for flask_mysql_util).
