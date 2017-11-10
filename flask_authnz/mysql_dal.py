@@ -1,6 +1,4 @@
 import logging
-import subprocess
-
 __author__ = 'andrej.babic@cosylab.com'
 
 
@@ -10,12 +8,22 @@ logger = logging.getLogger(__name__)
 class MySQLRoles(object):
     
 
-    def __init__(self, db_connection):
+    def __init__(self, db_connection, usergroupsgetter):
         """
         :param db_connection: Pass in the MultiMySQL connection to the roles database.
         :return:
         """
         self.db_connection = db_connection
+        self.usergroupsgetter = usergroupsgetter
+
+    QUERY_SELECT_PRIVILEGES_AND_ROLES_FOR_APP = """
+        SELECT 
+            p.name as priv_name, r.name as role_name 
+        FROM role r, priv p 
+        WHERE p.role_id=r.id 
+          AND r.app=%(application_name)s
+        ORDER BY p.name, r.name;
+        """
 
     def getPrivilegesForApplicationRoles(self, application_name):
         """
@@ -25,26 +33,16 @@ class MySQLRoles(object):
         :return a dict mapping privileges and the roles that contain that privilege.
         """
         # Return groups that have a specific role for a specific application.
-        query_select_privileges_and_roles_for_app = """
-        SELECT 
-            p.name as priv_name, r.name as role_name 
-        FROM role r, priv p 
-        WHERE p.role_id=r.id 
-          AND r.app=%(application_name)s
-        ORDER BY p.name, r.name;
-        """
 
         priv2roles = {}
         with self.db_connection.connect() as cursor:
-            cursor.execute(query_select_privileges_and_roles_for_app, {"application_name": application_name})
-            row = cursor.fetchone()
-            while row is not None:
+            cursor.execute(self.QUERY_SELECT_PRIVILEGES_AND_ROLES_FOR_APP, {"application_name": application_name})
+            for row in cursor.fetchall():
                 priv_name = row['priv_name']
                 role_name = row['role_name']
                 if priv_name not in priv2roles:
                     priv2roles[priv_name] = set()
                 priv2roles[priv_name].add(role_name)
-                row = cursor.fetchone()
         return priv2roles   
     
     def has_slac_user_role(self, user_id, application_name, user_role, experiment_id=None):
@@ -83,7 +81,7 @@ class MySQLRoles(object):
                          experiment_id))
 
         try:
-            user_groups = self.get_user_posix_groups(user_id)
+            user_groups = self.usergroupsgetter.get_user_posix_groups(user_id)
         except ValueError as e:
             logger.exception("Exception when trying to determine groups for user %s" % (user_id))
             return False
@@ -199,20 +197,3 @@ class MySQLRoles(object):
                                                                        "app": app_name})
                 return cursor.fetchall()
     
-    def get_user_posix_groups(self, user_id):
-        """
-        Get the complete list of posix groups for the user.
-        :param user_id: User id to get the posix groups for.
-        :return: List of posix groups.
-        """
-        try:
-            user_groups = subprocess.check_output(['id', '-Gn', user_id]).decode("utf-8").strip().split(' ')
-            logger.debug("User_id='%s' is member of groups %s." % (user_id, user_groups))
-            return user_groups
-        except subprocess.CalledProcessError as e:
-            user_groups = e.output.strip().split(' ')
-            return user_groups
-        except Exception as e:
-            raise ValueError("Error while trying to read the unix groups for user_id:'%s'. "
-                             "Does this user exists?\n%s" % (user_id, e))
-

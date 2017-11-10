@@ -29,7 +29,7 @@ class FlaskAuthnz(object):
         self.roles_dal = roles_dal
         self.application_name = application_name
         self.redirect_url = redirect_url
-        self.priv2roles = dal.getPrivilegesForApplicationRoles(application_name)
+        self.priv2roles = roles_dal.getPrivilegesForApplicationRoles(application_name)
         self.session_roles_name = "APPLICATION_ROLES_" + self.application_name
 
     

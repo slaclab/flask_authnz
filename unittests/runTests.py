@@ -6,7 +6,7 @@ import os
 import logging
 
 def suite():
-    suite = unittest.TestLoader().loadTestsFromNames(['TestMySQLDal'])
+    suite = unittest.TestLoader().loadTestsFromNames(['unittests.TestMySQLDal', 'unittests.TestFlaskAuthz'])
     return suite
 
 if __name__ == '__main__':
