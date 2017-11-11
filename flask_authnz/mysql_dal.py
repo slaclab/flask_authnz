@@ -62,7 +62,11 @@ class MySQLRoles(object):
         """
         with self.db_connection.connect() as cursor:
             cursor.execute(self.QUERY_SELECT_EXP_ID_FOR_EXP_NAME, {"experiment_name": experiment_name})
-            return cursor.fetchone()
+            ans = cursor.fetchone()
+            if ans:
+                return int(ans['experiment_id'])
+            logger.warn("Did not find experiment id for %s", experiment_name)
+            return None
 
     def get_experiment_id_for_name(self, experiment_name):
         """
@@ -70,7 +74,7 @@ class MySQLRoles(object):
         :param experiment_name - The name of the experiment - for example, diadaq13
         :return: - The experiment id; if there is no experiment with this name, return None
         """
-        return exp_name_2_exp_id.get(experiment_name, None)
+        return self.exp_name_2_exp_id[experiment_name]
     
     def has_slac_user_role(self, user_id, application_name, user_role, experiment_id=None):
         """
