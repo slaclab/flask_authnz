@@ -1,4 +1,6 @@
 import subprocess
+import logging
+logger = logging.getLogger(__name__)
 
 class UserGroups(object):
     def get_user_posix_groups(self, user_id):
