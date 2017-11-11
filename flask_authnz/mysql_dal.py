@@ -1,4 +1,6 @@
 import logging
+from cachetools import TTLCache
+
 __author__ = 'andrej.babic@cosylab.com'
 
 
@@ -15,6 +17,7 @@ class MySQLRoles(object):
         """
         self.db_connection = db_connection
         self.usergroupsgetter = usergroupsgetter
+        self.exp_name_2_exp_id = TTLCache(maxsize=1000, ttl=600, missing=self.lookup_exp_id_for_exp_name_in_db)
 
     QUERY_SELECT_PRIVILEGES_AND_ROLES_FOR_APP = """
         SELECT 
@@ -44,6 +47,30 @@ class MySQLRoles(object):
                     priv2roles[priv_name] = set()
                 priv2roles[priv_name].add(role_name)
         return priv2roles   
+
+    QUERY_SELECT_EXP_ID_FOR_EXP_NAME = """
+        SELECT 
+            exp.id as experiment_id 
+        FROM regdb.experiment exp 
+        WHERE exp.name = %(experiment_name)s;
+    """
+    def lookup_exp_id_for_exp_name_in_db(self, experiment_name):
+        """
+        Determine the experiment id for an experiment from the database.
+        :param experiment_name - The name of the experiment - for example, diadaq13
+        :return: - The experiment id; if there is no experiment with this name, return None
+        """
+        with self.db_connection.connect() as cursor:
+            cursor.execute(self.QUERY_SELECT_EXP_ID_FOR_EXP_NAME, {"experiment_name": experiment_name})
+            return cursor.fetchone()
+
+    def get_experiment_id_for_name(self, experiment_name):
+        """
+        Get the experiment id for the given experiment name
+        :param experiment_name - The name of the experiment - for example, diadaq13
+        :return: - The experiment id; if there is no experiment with this name, return None
+        """
+        return exp_name_2_exp_id.get(experiment_name, None)
     
     def has_slac_user_role(self, user_id, application_name, user_role, experiment_id=None):
         """

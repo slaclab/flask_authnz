@@ -71,6 +71,9 @@ class FlaskAuthnz(object):
             def wrapped(*args, **kwargs):
                 if 'experiment_id' in kwargs:
                     experiment_id = kwargs['experiment_id']
+                elif 'experiment_name' in kwargs:
+                    experiment_id = self.roles_dal.get_experiment_id_for_name(kwargs['experiment_name'])
+                    logger.debug("Looked up experiment id %s for name %s", (experiment_id, kwargs['experiment_name']))
                 else:
                     experiment_id = None
                 logger.info("Looking to authorize %s for app %s for privilege %s for experiment %s" % (self.get_current_user_id(), self.application_name, priv_name, experiment_id))

@@ -28,7 +28,7 @@ For example,
 def processing_definitions(experiment_id):
 ```
 - The order of the decorators is important.
-- For experiment based authorization, it is important that the method takes in an argument called `experiment_id` that contains the experiment_id.
+- For experiment based authorization, it is important that the method takes in an argument called `experiment_name` that contains the experiment\_name or an argument named `experiment_id` that contains the experiment_id.
 - Authorization is based on privileges; so in this example, you are allowing those with the `read` privilege to get the `processing_definitions`
 - The application will load and cache the privileges -> role mapping on startup.
 - When an authorization request is made, we get a set of roles for the user and a set of roles that contain this privilege. The user is authorized if the intersection of these two sets is non-empty.
