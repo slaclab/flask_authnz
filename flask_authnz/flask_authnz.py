@@ -77,7 +77,7 @@ class FlaskAuthnz(object):
                 else:
                     experiment_id = None
                 logger.info("Looking to authorize %s for app %s for privilege %s for experiment %s" % (self.get_current_user_id(), self.application_name, priv_name, experiment_id))
-                if not self.__check_privilege_for_experiment(priv_name, experiment_id):
+                if not self.check_privilege_for_experiment(priv_name, experiment_id):
                     abort(403)
                 return f(*args, **kwargs)
             return wrapped
@@ -98,6 +98,20 @@ class FlaskAuthnz(object):
         if self.get_current_user_id():
             return True
         return False
+
+    def check_privilege_for_experiment(self, priv_name, experiment_id):
+        """
+        Check to see if this use has the necessary privilege for this experiment.
+        The application caches all the privilege -> role mappings on startup. 
+        We check to see if this user has any of the roles necessary for the privilege.
+        """
+        for role_name in self.priv2roles[priv_name]:
+            if self.__authorize_slac_user_for_experiment(role_name, experiment_id):
+                logger.debug("Role %s grants privilege %s for user %s for experiment %s" % (role_name, priv_name, self.get_current_user_id(), experiment_id))
+                return True
+        logger.warn("Did not find any role with privilege %s for user %s for experiment %s" % (priv_name, self.get_current_user_id(), experiment_id))
+        return False
+
             
     def __authorize_slac_user_for_experiment(self, application_role, experiment_id=None):
         """
@@ -137,18 +151,5 @@ class FlaskAuthnz(object):
             logger.info("Did not find application role %s for experiment id %s in db for user %s" % (role_fq_name, experiment_id, user_id))
             return False
             
-        return False
-
-    def __check_privilege_for_experiment(self, priv_name, experiment_id):
-        """
-        Check to see if this use has the necessary privilege for this experiment.
-        The application caches all the privilege -> role mappings on startup. 
-        We check to see if this user has any of the roles necessary for the privilege.
-        """
-        for role_name in self.priv2roles[priv_name]:
-            if self.__authorize_slac_user_for_experiment(role_name, experiment_id):
-                logger.debug("Role %s grants privilege %s for user %s for experiment %s" % (role_name, priv_name, self.get_current_user_id(), experiment_id))
-                return True
-        logger.warn("Did not find any role with privilege %s for user %s for experiment %s" % (priv_name, self.get_current_user_id(), experiment_id))
         return False
 
