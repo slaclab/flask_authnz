@@ -55,11 +55,11 @@ class FlaskAuthnz(object):
     def authorization_required(self, *params):
         '''
         Decorator for experiment specific authorization - decorate your function in this order
-        _at_logbook_service_blueprint.route("/get_batch_executables/<experiment_id>", methods=["GET"])
+        _at_logbook_service_blueprint.route("/get_batch_executables/<experiment_name>", methods=["GET"])
         _at_context.security.authentication_required
         _at_context.security.authorization_required("read")
-        To pass in an experiment_id, use the variable name experiment_id in your flask variable names
-        Note you are passing in privileges here; not the roles.  
+        To pass in an experiment_name, use the variable name experiment_name in your flask variable names
+        Note you are passing in privileges as part of the authorization_required decorator; not the roles.  
         '''
         if len(params) < 1:
             raise Exception("Application privilege not specified when specifying the authorization")
@@ -69,15 +69,9 @@ class FlaskAuthnz(object):
         def wrapper(f):
             @wraps(f)
             def wrapped(*args, **kwargs):
-                if 'experiment_name' in kwargs:
-                    experiment_id = self.roles_dal.get_experiment_id_for_name(kwargs['experiment_name'])
-                    logger.debug("Looked up experiment id %s for name %s", experiment_id, kwargs['experiment_name'])
-                elif 'experiment_id' in kwargs:
-                    experiment_id = kwargs['experiment_id']
-                else:
-                    experiment_id = None
-                logger.info("Looking to authorize %s for app %s for privilege %s for experiment %s" % (self.get_current_user_id(), self.application_name, priv_name, experiment_id))
-                if not self.check_privilege_for_experiment(priv_name, experiment_id):
+                experiment_name = kwargs.get('experiment_name', None)
+                logger.info("Looking to authorize %s for app %s for privilege %s for experiment %s" % (self.get_current_user_id(), self.application_name, priv_name, experiment_name))
+                if not self.check_privilege_for_experiment(priv_name, experiment_name):
                     abort(403)
                 return f(*args, **kwargs)
             return wrapped
@@ -99,25 +93,25 @@ class FlaskAuthnz(object):
             return True
         return False
 
-    def check_privilege_for_experiment(self, priv_name, experiment_id):
+    def check_privilege_for_experiment(self, priv_name, experiment_name):
         """
         Check to see if this use has the necessary privilege for this experiment.
         The application caches all the privilege -> role mappings on startup. 
         We check to see if this user has any of the roles necessary for the privilege.
         """
         for role_name in self.priv2roles[priv_name]:
-            if self.__authorize_slac_user_for_experiment(role_name, experiment_id):
-                logger.debug("Role %s grants privilege %s for user %s for experiment %s" % (role_name, priv_name, self.get_current_user_id(), experiment_id))
+            if self.__authorize_slac_user_for_experiment(role_name, experiment_name):
+                logger.debug("Role %s grants privilege %s for user %s for experiment %s" % (role_name, priv_name, self.get_current_user_id(), experiment_name))
                 return True
-        logger.warn("Did not find any role with privilege %s for user %s for experiment %s" % (priv_name, self.get_current_user_id(), experiment_id))
+        logger.warn("Did not find any role with privilege %s for user %s for experiment %s" % (priv_name, self.get_current_user_id(), experiment_name))
         return False
 
             
-    def __authorize_slac_user_for_experiment(self, application_role, experiment_id=None):
+    def __authorize_slac_user_for_experiment(self, application_role, experiment_name=None):
         """
         Check if SLAC user has the appropriate role in self.application.
         :param application_role: Application role in self.application needed to perform this task
-        :param experiment_id: Optional; is this request within the context of an experiment.
+        :param experiment_name: Optional; is this request within the context of an experiment.
         If so, this is the primary key in the regdb database to the experiment.
         :return:
         """
@@ -126,29 +120,29 @@ class FlaskAuthnz(object):
         session_app_roles = session.get(self.session_roles_name, {})
         if role_fq_name in session_app_roles:
             logger.info("Found fq_name %s in session for user %s" % (role_fq_name, user_id))
-            if experiment_id:
-                if experiment_id in session_app_roles[role_fq_name]:
-                    logger.info("Found experiment id %s for application role %s in session for user %s" % (experiment_id, role_fq_name, user_id))
+            if experiment_name:
+                if experiment_name in session_app_roles[role_fq_name]:
+                    logger.info("Found experiment %s for application role %s in session for user %s" % (experiment_name, role_fq_name, user_id))
                     return True
             else:
-                # Caller did not specify experiment id; so presence of the fq_name is enough for authorization.
-                logger.info("Caller did not specify experiment id but we found fq_name %s in session for user %s" % (role_fq_name, user_id))
+                # Caller did not specify experiment; so presence of the fq_name is enough for authorization.
+                logger.info("Caller did not specify experiment but we found fq_name %s in session for user %s" % (role_fq_name, user_id))
                 return True                    
         
         if self.roles_dal.has_slac_user_role(user_id,
                                                  self.application_name,
                                                  application_role,
-                                                 experiment_id):
+                                                 experiment_name):
             # Add an entry in the session.
-            logger.info("Found application role %s for experiment id %s in db for user %s" % (role_fq_name, experiment_id, user_id))
+            logger.info("Found application role %s for experiment %s in db for user %s" % (role_fq_name, experiment_name, user_id))
             if role_fq_name not in session_app_roles:
                 session_app_roles[role_fq_name] = []
-            if experiment_id and experiment_id not in session_app_roles[role_fq_name]:
-                session_app_roles[role_fq_name].append(experiment_id)
+            if experiment_name and experiment_name not in session_app_roles[role_fq_name]:
+                session_app_roles[role_fq_name].append(experiment_name)
             session[self.session_roles_name] = session_app_roles
             return True
         else:
-            logger.info("Did not find application role %s for experiment id %s in db for user %s" % (role_fq_name, experiment_id, user_id))
+            logger.info("Did not find application role %s for experiment %s in db for user %s" % (role_fq_name, experiment_name, user_id))
             return False
             
         return False

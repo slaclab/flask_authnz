@@ -1,3 +1,3 @@
 from .flask_authnz import FlaskAuthnz
-from .mysql_dal import MySQLRoles
+from .mongodb_dal import MongoDBRoles
 from .usergroups import UserGroups
