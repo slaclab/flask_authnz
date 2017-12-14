@@ -32,7 +32,7 @@ class MongoDBRoles(object):
         """
         # Privileges are stored in the roles database
         priv2roles = {}
-        for role in self.mongoclient["roles"]["roles"].find({"app": application_name}):
+        for role in self.mongoclient["site"]["roles"].find({"app": application_name}):
             role_name = role["name"]
             privileges = role.get("privileges", [])
             for privilege in privileges:
@@ -51,7 +51,7 @@ class MongoDBRoles(object):
         :return:
         """
         role_players = set()
-        for role in self.mongoclient["roles"]["roles"].find({"app": application_name, "name": role_name}):
+        for role in self.mongoclient["site"]["roles"].find({"app": application_name, "name": role_name}):
             for player in role.get("players", []): 
                 role_players.add(player)
         if experiment_name:
