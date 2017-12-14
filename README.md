@@ -12,6 +12,29 @@ security = FlaskAuthnz(MongoDBRoles(mongoclient, UserGroups()), "LogBook")
 ```
 
 As this uses the MongoDB for roles, you'd need to pass in a MongoClient connected to a server that can read the "roles" collection in all the databases.
+For example, the following snippet creates a user `roleReader` that can read the `roles` collection in all databases.
+```
+use admin
+db.createRole(
+ {
+   role: "roleReader",
+   privileges: [ {
+     actions: [ "find" ],
+     resource: { db: "", collection: "roles" }
+   } ],
+   roles: []
+ }
+)
+
+db.createUser(
+ {
+   user: "roleReader",
+   pwd: "...pwd...",
+   roles: [ { role: "roleReader", db: "admin" } ]
+ }
+)
+```
+
 
 You can then mark your flask blueprint endpoints with decorators to indicate the need for authentication/authorization.
 For example, 
