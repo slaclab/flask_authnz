@@ -10,7 +10,7 @@ class UserGroups(object):
         :return: List of posix groups.
         """
         try:
-            user_groups = subprocess.run(['id', '-Gn', user_id]).decode("utf-8").strip().split(' ')
+            user_groups = subprocess.run(['id', '-Gn', user_id], check=False, stdout=subprocess.PIPE).stdout.decode("utf-8").strip().split(' ')
             logger.debug("User_id='%s' is member of groups %s." % (user_id, user_groups))
             return user_groups
         except subprocess.CalledProcessError as e:
