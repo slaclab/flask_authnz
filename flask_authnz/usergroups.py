@@ -17,7 +17,7 @@ class UserGroups(object):
         :param user_id: User id to get the posix groups for.
         :return: List of posix groups.
         """
-        user_groups = [x["cn"] for x in ug.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(memberUid={0}))".format(user_id), "cn"])]
+        user_groups = [x["cn"] for x in self.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(memberUid={0}))".format(user_id), "cn"])]
         logger.debug("User_id='%s' is member of groups %s." % (user_id, user_groups))
         return user_groups
 
@@ -27,7 +27,7 @@ class UserGroups(object):
         :param group_name: Group name to get the members for.
         :return: List of member user id's
         """
-        grpobj = ug.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(cn={0}))".format(group_name), "memberUid"])
+        grpobj = self.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(cn={0}))".format(group_name), "memberUid"])
         logger.debug("Group '%s' has members %s." % (group_name, grpobj))
         if grpobj:
             return grpobj[0]['memberUid']
@@ -39,7 +39,7 @@ class UserGroups(object):
         :param group_pattern: Pattern to match against
         :return: List of group names
         """
-        groupnames = [x["cn"] for x in ug.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(cn={0}))".format(group_pattern), "cn"])]
+        groupnames = [x["cn"] for x in self.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(cn={0}))".format(group_pattern), "cn"])]
         logger.debug("Group pattern '%s' has groups %s." % (group_pattern, groupnames))
         return groupnames
 
@@ -49,7 +49,7 @@ class UserGroups(object):
         :param userid_pattern: Pattern to match against
         :return: List of dicts with the uid, cn and gecos
         """
-        userobjs = ug.search_LDAP(ldapsearchCommand + ["(uid={0})".format(userid_pattern), "uid", "cn", "gecos"])
+        userobjs = self.search_LDAP(ldapsearchCommand + ["(uid={0})".format(userid_pattern), "uid", "cn", "gecos"])
         logger.debug("Users matching pattern '%s' has entries %s." % (userid_pattern, userobjs))
         return userobjs
 
