@@ -11,7 +11,10 @@ from flask_authnz import FlaskAuthnz, MongoDBRoles, UserGroups
 security = FlaskAuthnz(MongoDBRoles(mongoclient, UserGroups()), "LogBook")
 ```
 
-As this uses the MongoDB for roles, you'd need to pass in a MongoClient connected to a server that can read the "roles" collection in all the databases.
+`UserGroups` uses `ldapsearch` to search LDAP for users, groups and groups memberships.
+See the section below on LDAP for configuration and testing hints.
+
+As the security object `MongoDBRoles` uses the MongoDB for roles, you'd need to pass in a MongoClient connected to a server that can read the "roles" collection in all the databases.
 For example, the following snippet creates a user `roleReader` that can read the `roles` collection in all databases.
 ```
 use admin
@@ -37,7 +40,7 @@ db.createUser(
 
 
 You can then mark your flask blueprint endpoints with decorators to indicate the need for authentication/authorization.
-For example, 
+For example,
 ```
 @logbook_service_blueprint.route("/processing_definitions/<experiment_name>", methods=["GET"])
 @context.security.authentication_required
@@ -50,6 +53,17 @@ def processing_definitions(experiment_name):
 - The application will load and cache the privileges -> role mapping on startup.
 - When an authorization request is made, we get a set of roles for the user and a set of roles that contain this privilege. The user is authorized if the intersection of these two sets is non-empty.
 
+
+#### Configuring and testing LDAP
+LDAP software typically have numerous configuration options; listing all of these is beyond the scope of this document.
+Thankfully, OpenLDAP's `ldapsearch`, in recent versions of Linux, supports separation of the LDAP configuration from client applications.
+In most Linuxes, OpenLDAP clients are configured using `/etc/openldap/ldap.conf`.
+The most common configuration options are the `URI` and `BASE`.
+In many cases, `TLS_REQCERT` is set to `never`.
+LDAP configuration can be tested outside of the application using `ldapsearch`.
+This module uses `ldapsearch -x` to determine users, groups and group memberships.
+To use a command other than `ldapsearch -x`, set the environment variable, FLASK_AUTHNZ_LDAPSEARCH_COMMAND.
+Test the various queries outside the app using LDAP queries like `ldapsearch -x "(uid=john*)" uid cn gecos`.
+
 #### Running the tests.
 To run the unittests, use `python -m unittests.runTests` from the root folder.
-
