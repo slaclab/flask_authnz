@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='flask_authnz',
-      version='0.0.11',
+      version='0.0.12',
       description='A small utility for authentication/authorization for flask based services',
       url='https://github.com/slaclab/flask_authnz.git',
       author='Murali Shankar',

@@ -4,13 +4,20 @@ import json
 from collections import OrderedDict
 import subprocess
 import logging
-from functools import lru_cache
+from threading import RLock
+from cachetools import TTLCache, cached
 
 logger = logging.getLogger(__name__)
 
 ldapsearchCommand = os.environ.get("FLASK_AUTHNZ_LDAPSEARCH_COMMAND", "ldapsearch -x").split()
+user_groups_cache_time_in_seconds = int(os.environ.get("FLASK_AUTHNZ_CACHE_TIME", "3600"))
+user_groups_cache_size = int(os.environ.get("FLASK_AUTHNZ_CACHE_SIZE", "2048"))
+user_groups_cache = TTLCache(user_groups_cache_size, user_groups_cache_time_in_seconds)
+user_groups_cache_lock = RLock()
 
 class UserGroups(object):
+
+    @cached(user_groups_cache, lock=user_groups_cache_lock)
     def get_user_posix_groups(self, user_id):
         """
         Get the complete list of posix groups for the user.
