@@ -46,7 +46,7 @@ class UserGroups(object):
         :param group_pattern: Pattern to match against
         :return: List of group names
         """
-        groupnames = [x["cn"] for x in self.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(cn={0}))".format(group_pattern), "cn"])]
+        groupnames = [x["cn"] for x in self.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(cn={0}))".format(group_pattern), "cn", "gidNumber"])]
         logger.debug("Group pattern '%s' has groups %s." % (group_pattern, groupnames))
         return groupnames
 
@@ -56,7 +56,7 @@ class UserGroups(object):
         :param userid_pattern: Pattern to match against
         :return: List of dicts with the uid, cn and gecos
         """
-        userobjs = self.search_LDAP(ldapsearchCommand + ["(uid={0})".format(userid_pattern), "uid", "cn", "gecos"])
+        userobjs = self.search_LDAP(ldapsearchCommand + ["(uid={0})".format(userid_pattern), "uid", "cn", "gecos", "uidNumber"])
         logger.debug("Users matching pattern '%s' has entries %s." % (userid_pattern, userobjs))
         return userobjs
 
