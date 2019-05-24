@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 class FlaskAuthnz(object):
     """
-    General security client for flask web services at PSDM/SLAC. 
+    General security client for flask web services at PSDM/SLAC.
     We assume that the application is behind a web service tied into SLAC SSO (WebAuth/SAML).
     During initialization, pass in some form of a database object that provides for introspecting the roles.
-    Our privilege model has these variants 
+    Our privilege model has these variants
     --> Roles are collections of application privileges. We load application privileges on startup.
     --> Users or groups are assigned roles.
     --> Users/groups are assigned roles in the context of experiments/instruments.
@@ -24,7 +24,7 @@ class FlaskAuthnz(object):
         Initialize the security client.
         :param roles_dal: A data access object to get to the roles/privileges.
         :param application_name: The name of this application.
-        :param redirect_url: Redirect to this URL if we fail authentication. Note that with WebAuth integration, you will not be needing this. 
+        :param redirect_url: Redirect to this URL if we fail authentication. Note that with WebAuth integration, you will not be needing this.
         """
         self.roles_dal = roles_dal
         self.application_name = application_name
@@ -32,7 +32,7 @@ class FlaskAuthnz(object):
         self.priv2roles = roles_dal.getPrivilegesForApplicationRoles(application_name)
         self.session_roles_name = "APPLICATION_ROLES_" + self.application_name
 
-    
+
     def authentication_required(self, wrapped_function):
         """
         Primary decorator to mandate that an authentication is required for this method.
@@ -48,7 +48,7 @@ class FlaskAuthnz(object):
                 else:
                     logger.info("User is not logged in; sending a 403 response")
                     abort(403)
-                    return None 
+                    return None
 
         return function_interceptor
 
@@ -59,7 +59,7 @@ class FlaskAuthnz(object):
         _at_context.security.authentication_required
         _at_context.security.authorization_required("read")
         To pass in an experiment_name, use the variable name experiment_name in your flask variable names
-        Note you are passing in privileges as part of the authorization_required decorator; not the roles.  
+        Note you are passing in privileges as part of the authorization_required decorator; not the roles.
         '''
         if len(params) < 1:
             raise Exception("Application privilege not specified when specifying the authorization")
@@ -75,14 +75,17 @@ class FlaskAuthnz(object):
                     abort(403)
                 return f(*args, **kwargs)
             return wrapped
-        return wrapper 
+        return wrapper
 
     def get_current_user_id(self):
         """
         Get the user id from the proxy.
         :return: User id in the proxy header.
         """
-        return request.environ.get("HTTP_REMOTE_USER", None)
+        remote_user = request.environ.get("HTTP_REMOTE_USER", None)
+        if remote_user and '@' in remote_user:
+            remote_user = remote_user.split("@")[0]
+        return remote_user
 
     def is_user_authenticated(self):
         """
@@ -96,7 +99,7 @@ class FlaskAuthnz(object):
     def check_privilege_for_experiment(self, priv_name, experiment_name):
         """
         Check to see if this use has the necessary privilege for this experiment.
-        The application caches all the privilege -> role mappings on startup. 
+        The application caches all the privilege -> role mappings on startup.
         We check to see if this user has any of the roles necessary for the privilege.
         """
         for role_name in self.priv2roles[priv_name]:
@@ -106,7 +109,7 @@ class FlaskAuthnz(object):
         logger.warn("Did not find any role with privilege %s for user %s for experiment %s" % (priv_name, self.get_current_user_id(), experiment_name))
         return False
 
-            
+
     def __authorize_slac_user_for_experiment(self, application_role, experiment_name=None):
         """
         Check if SLAC user has the appropriate role in self.application.
@@ -127,8 +130,8 @@ class FlaskAuthnz(object):
             else:
                 # Caller did not specify experiment; so presence of the fq_name is enough for authorization.
                 logger.info("Caller did not specify experiment but we found fq_name %s in session for user %s" % (role_fq_name, user_id))
-                return True                    
-        
+                return True
+
         if self.roles_dal.has_slac_user_role(user_id,
                                                  self.application_name,
                                                  application_role,
@@ -144,6 +147,5 @@ class FlaskAuthnz(object):
         else:
             logger.info("Did not find application role %s for experiment %s in db for user %s" % (role_fq_name, experiment_name, user_id))
             return False
-            
-        return False
 
+        return False
