@@ -1,7 +1,7 @@
 import logging
 from functools import wraps
 
-from flask import request, jsonify, url_for, abort, session
+from flask import request, jsonify, url_for, abort, session, g
 from werkzeug.utils import redirect
 
 __author__ = 'andrej.babic@cosylab.com'
@@ -70,8 +70,9 @@ class FlaskAuthnz(object):
             @wraps(f)
             def wrapped(*args, **kwargs):
                 experiment_name = kwargs.get('experiment_name', None)
+                instrument = g.get("instrument", None)
                 logger.info("Looking to authorize %s for app %s for privilege %s for experiment %s" % (self.get_current_user_id(), self.application_name, priv_name, experiment_name))
-                if not self.check_privilege_for_experiment(priv_name, experiment_name):
+                if not self.check_privilege_for_experiment(priv_name, experiment_name, instrument):
                     abort(403)
                 return f(*args, **kwargs)
             return wrapped
@@ -96,21 +97,21 @@ class FlaskAuthnz(object):
             return True
         return False
 
-    def check_privilege_for_experiment(self, priv_name, experiment_name):
+    def check_privilege_for_experiment(self, priv_name, experiment_name, instrument=None):
         """
         Check to see if this use has the necessary privilege for this experiment.
         The application caches all the privilege -> role mappings on startup.
         We check to see if this user has any of the roles necessary for the privilege.
         """
         for role_name in self.priv2roles[priv_name]:
-            if self.__authorize_slac_user_for_experiment(role_name, experiment_name):
+            if self.__authorize_slac_user_for_experiment(role_name, experiment_name, instrument):
                 logger.debug("Role %s grants privilege %s for user %s for experiment %s" % (role_name, priv_name, self.get_current_user_id(), experiment_name))
                 return True
         logger.warn("Did not find any role with privilege %s for user %s for experiment %s" % (priv_name, self.get_current_user_id(), experiment_name))
         return False
 
 
-    def __authorize_slac_user_for_experiment(self, application_role, experiment_name=None):
+    def __authorize_slac_user_for_experiment(self, application_role, experiment_name=None, instrument=None):
         """
         Check if SLAC user has the appropriate role in self.application.
         :param application_role: Application role in self.application needed to perform this task
@@ -135,7 +136,8 @@ class FlaskAuthnz(object):
         if self.roles_dal.has_slac_user_role(user_id,
                                                  self.application_name,
                                                  application_role,
-                                                 experiment_name):
+                                                 experiment_name,
+                                                 instrument):
             # Add an entry in the session.
             logger.info("Found application role %s for experiment %s in db for user %s" % (role_fq_name, experiment_name, user_id))
             if role_fq_name not in session_app_roles:
