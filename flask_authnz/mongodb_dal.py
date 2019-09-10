@@ -59,13 +59,13 @@ class MongoDBRoles(object):
             for role in self.mongoclient[experiment_name]["roles"].find({"app": application_name, "name": role_name}):
                 for player in role.get("players", []):
                     role_players.add(player)
-            if instrument:
-                instr_obj = self.mongoclient["site"]["instruments"].find_one({"_id": instrument})
-                if instr_obj:
-                    for in_role in instr_obj.get("roles", []):
-                        if in_role.get("app", None) == application_name and in_role.get("name", None) == role_name:
-                            for player in in_role.get("players", []):
-                                role_players.add(player)
+        if instrument:
+            instr_obj = self.mongoclient["site"]["instruments"].find_one({"_id": instrument})
+            if instr_obj:
+                for in_role in instr_obj.get("roles", []):
+                    if in_role.get("app", None) == application_name and in_role.get("name", None) == role_name:
+                        for player in in_role.get("players", []):
+                            role_players.add(player)
 
 
         # Check if the user is directly mentioned in the database.
