@@ -1,10 +1,10 @@
 package:
   name: flask_authzn
-  version: "0.0.18"
+  version: "0.0.19"
 
 source:
   git_url: git@github.com:slaclab/flask_authnz.git
-  git_tag: "0.0.18"
+  git_tag: "0.0.19"
 
 build:
   script:
