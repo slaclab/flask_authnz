@@ -1,12 +1,13 @@
 package:
   name: flask_authzn
-  version: "0.0.19"
+  version: "0.0.20"
 
 source:
   git_url: git@github.com:slaclab/flask_authnz.git
-  git_tag: "0.0.19"
+  git_tag: "0.0.20"
 
 build:
+  noarch: python
   script:
     - pip install --no-deps --disable-pip-version-check .
 
