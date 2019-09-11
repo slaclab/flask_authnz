@@ -71,7 +71,7 @@ class FlaskAuthnz(object):
             def wrapped(*args, **kwargs):
                 experiment_name = kwargs.get('experiment_name', None)
                 instrument = g.get("instrument", None)
-                logger.info("Looking to authorize %s for app %s for privilege %s for experiment %s" % (self.get_current_user_id(), self.application_name, priv_name, experiment_name))
+                logger.info("Looking to authorize %s for app %s for privilege %s for experiment %s instrument %s" % (self.get_current_user_id(), self.application_name, priv_name, experiment_name, instrument))
                 if not self.check_privilege_for_experiment(priv_name, experiment_name, instrument):
                     abort(403)
                 return f(*args, **kwargs)
@@ -128,6 +128,10 @@ class FlaskAuthnz(object):
                 if experiment_name in session_app_roles[role_fq_name]:
                     logger.info("Found experiment %s for application role %s in session for user %s" % (experiment_name, role_fq_name, user_id))
                     return True
+            elif instrument:
+                if instrument in session_app_roles[role_fq_name]:
+                    logger.info("Found instrument %s for application role %s in session for user %s" % (instrument, role_fq_name, user_id))
+                    return True
             else:
                 # Caller did not specify experiment; so presence of the fq_name is enough for authorization.
                 logger.info("Caller did not specify experiment but we found fq_name %s in session for user %s" % (role_fq_name, user_id))
@@ -144,10 +148,12 @@ class FlaskAuthnz(object):
                 session_app_roles[role_fq_name] = []
             if experiment_name and experiment_name not in session_app_roles[role_fq_name]:
                 session_app_roles[role_fq_name].append(experiment_name)
+            elif instrument and instrument not in session_app_roles[role_fq_name]:
+                session_app_roles[role_fq_name].append(instrument)
             session[self.session_roles_name] = session_app_roles
             return True
         else:
-            logger.info("Did not find application role %s for experiment %s in db for user %s" % (role_fq_name, experiment_name, user_id))
+            logger.info("Did not find application role %s for experiment %s instrument %s in db for user %s" % (role_fq_name, experiment_name, instrument, user_id))
             return False
 
         return False

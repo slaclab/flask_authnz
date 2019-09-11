@@ -78,7 +78,18 @@ class TestFlaskAuthz(unittest.TestCase):
                                 "name" : "Operator",
                                 "players" : [ "ps_xpp" ]
                             } ],
-                    } ] )
+                    },
+                    {
+                        "_id" : "MEC",
+                        "name" : "MEC",
+                        "roles": [
+                            {
+                                "app" : "LogBook",
+                                "name" : "Operator",
+                                "players" : [ "ps_mec" ]
+                            } ],
+                    }
+                    ] )
                 },
              "xpp123456": {
                 "roles": MockDatabase( [
@@ -170,3 +181,17 @@ class TestFlaskAuthz(unittest.TestCase):
             with self.assertRaises(HTTPException) as http_error:
                 self.assertFalse(security.authorization_required("experiment_switch")(part)("Authorized"))
                 self.assertEqual(http_error.exception.code, 403)
+
+        # Make sure we do not reuse the instrument operator permission for other instruments.
+        with app.test_request_context('/'):
+            # Test instrument only privileges
+            flask.g.instrument = "XPP"
+            flask.request.environ["HTTP_REMOTE_USER"] = "xpp_instrment_operator"
+            self.assertTrue(security.authentication_required(part("Authenticated...."))())
+            self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized"))
+            flask.g.instrument = "MEC"
+            with self.assertRaises(HTTPException) as http_error:
+                self.assertFalse(security.authorization_required("experiment_switch")(part)("Authorized"))
+                self.assertEqual(http_error.exception.code, 403)
+            flask.g.instrument = "XPP"
+            self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized"))
