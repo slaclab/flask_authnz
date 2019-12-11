@@ -156,6 +156,10 @@ class TestFlaskAuthz(unittest.TestCase):
             with self.assertRaises(HTTPException) as http_error:
                 self.assertFalse(security.authorization_required("edit")(part)("Authorized", **{'experiment_name':'mec987654'}))
                 self.assertEqual(http_error.exception.code, 403)
+            # Make sure that if we have a read permission for an experiment, we do not get it for all experiments.
+            with self.assertRaises(HTTPException) as http_error:
+                self.assertFalse(security.authorization_required("read")(part)("Authorized", **{}))
+                self.assertEqual(http_error.exception.code, 403)
 
             flask.request.environ["HTTP_REMOTE_USER"] = "xpp123456_PI"
             self.assertTrue(security.authentication_required(part("Authenticated...."))())
