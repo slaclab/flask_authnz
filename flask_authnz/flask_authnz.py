@@ -110,6 +110,11 @@ class FlaskAuthnz(object):
         logger.warn("Did not find any role with privilege %s for user %s for experiment %s" % (priv_name, self.get_current_user_id(), experiment_name))
         return False
 
+    def get_session_roles(self):
+        """
+        Get the list of roles stored in the flask session
+        """
+        session_app_roles = session.get(self.session_roles_name, {})
 
     def __authorize_slac_user_for_experiment(self, application_role, experiment_name=None, instrument=None):
         """
