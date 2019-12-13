@@ -140,11 +140,8 @@ class FlaskAuthnz(object):
             else:
                 # Caller did not specify experiment; so we make sure that there are is an __ALL__ experiment in the list of experiments
                 if "__ALL__" in session_app_roles[role_fq_name]:
-                    logger.info("Caller did not specify experiment but we found fq_name %s in session for user %s" % (role_fq_name, user_id))
+                    logger.info("Caller did not specify experiment but we found __ALL__ for fq_name %s in session for user %s" % (role_fq_name, user_id))
                     return True
-                else:
-                    logger.info("Caller did not specify experiment but we did not find an universal fq_name %s in session for user %s" % (role_fq_name, user_id))
-                    return False
 
         if self.roles_dal.has_slac_user_role(user_id,
                                                  self.application_name,

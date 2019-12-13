@@ -199,3 +199,14 @@ class TestFlaskAuthz(unittest.TestCase):
                 self.assertEqual(http_error.exception.code, 403)
             flask.g.instrument = "XPP"
             self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized"))
+
+        with app.test_request_context('/'):
+            # Test global privileges
+            flask.g.instrument = "XPP"
+            flask.request.environ["HTTP_REMOTE_USER"] = "PowerUser"
+            self.assertTrue(security.authentication_required(part("Authenticated...."))())
+            self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized"))
+            self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized", **{'experiment_name':'xpp123456'}))
+            self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized", **{}))
+            self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized", **{'experiment_name':'mec987654'}))
+            self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized", **{'experiment_name':'mec987654'}))
