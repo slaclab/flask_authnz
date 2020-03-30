@@ -37,7 +37,9 @@ class UserGroups(object):
         grpobj = self.search_LDAP(ldapsearchCommand + ["(&(objectclass=posixGroup)(cn={0}))".format(group_name), "memberUid"])
         logger.debug("Group '%s' has members %s." % (group_name, grpobj))
         if grpobj:
-            return grpobj[0]['memberUid']
+            if 'memberUid' in grpobj[0] and isinstance(grpobj[0]['memberUid'], str):
+                return [grpobj[0]['memberUid']]
+            return grpobj[0].get('memberUid', [])
         return []
 
     def get_groups_matching_pattern(self, group_pattern):
