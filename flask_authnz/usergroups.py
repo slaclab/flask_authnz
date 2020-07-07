@@ -58,7 +58,7 @@ class UserGroups(object):
         :param userid_pattern: Pattern to match against
         :return: List of dicts with the uid, cn and gecos
         """
-        userobjs = self.search_LDAP(ldapsearchCommand + ["(uid={0})".format(userid_pattern), "uid", "cn", "gecos", "uidNumber"])
+        userobjs = self.search_LDAP(ldapsearchCommand + ["(&(objectClass=posixAccount)(|(uid={0})(cn={0})))".format(userid_pattern), "uid", "cn", "gecos", "uidNumber"])
         logger.debug("Users matching pattern '%s' has entries %s." % (userid_pattern, userobjs))
         return userobjs
 
