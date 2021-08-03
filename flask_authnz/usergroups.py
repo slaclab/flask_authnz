@@ -109,8 +109,8 @@ class UserGroups(object):
 if __name__ == '__main__':
     ug = UserGroups()
     print(json.dumps([
-        ug.get_user_posix_groups('mshankar'),
-        ug.get_group_members('ps-data'),
+        ug.get_user_posix_groups('psreldev'),
+        ug.get_group_members('xs'),
         ug.get_groups_matching_pattern('ps-*'),
         ug.get_userids_matching_pattern('ms*')
         ]))
