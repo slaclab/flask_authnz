@@ -1,3 +1,4 @@
+import os
 import logging
 from functools import wraps
 
@@ -83,7 +84,7 @@ class FlaskAuthnz(object):
         Get the user id from the proxy.
         :return: User id in the proxy header.
         """
-        remote_user = request.environ.get("HTTP_REMOTE_USER", None)
+        remote_user = request.environ.get(os.environ.get("FLASK_AUTHNZ_USER_HEADER", "HTTP_REMOTE_USER"), None)
         if remote_user and '@' in remote_user:
             remote_user = remote_user.split("@")[0]
         return remote_user
