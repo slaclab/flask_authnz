@@ -92,6 +92,7 @@ class TestFlaskAuthz(unittest.TestCase):
                     ] )
                 },
              "xpp123456": {
+                "info": MockDatabase([{}]),
                 "roles": MockDatabase( [
                     {
                         "app" : "LogBook",
@@ -105,6 +106,7 @@ class TestFlaskAuthz(unittest.TestCase):
                     ] )
                 },
              "mec987654": {
+                "info": MockDatabase([{}]),
                 "roles": MockDatabase( [
                     {
                         "app" : "LogBook",
@@ -114,6 +116,20 @@ class TestFlaskAuthz(unittest.TestCase):
                         "app" : "LogBook",
                         "name" : "Reader",
                         "players" : [ "uid:specific_mec987654_reader", "ps_mec987654_readers" ]
+                    }
+                    ] )
+                },
+             "restricted_experiment": {
+                "info": MockDatabase([{"params": {"is_restricted": "true"}}]),
+                "roles": MockDatabase( [
+                    {
+                        "app" : "LogBook",
+                        "name" : "Editor",
+                        "players" : [ "uid:specific_restricted_editor", "ps_restricted_editors" ] },
+                    {
+                        "app" : "LogBook",
+                        "name" : "Reader",
+                        "players" : [ "uid:specific_restricted_reader", "ps_restricted_readers" ]
                     }
                     ] )
                 }
@@ -210,3 +226,40 @@ class TestFlaskAuthz(unittest.TestCase):
             self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized", **{}))
             self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized", **{'experiment_name':'mec987654'}))
             self.assertTrue(security.authorization_required("experiment_switch")(part)("Authorized", **{'experiment_name':'mec987654'}))
+
+        # Test restricted privileges
+        with app.test_request_context('/'):
+            flask.request.environ["HTTP_REMOTE_USER"] = "specific_restricted_editor"
+            flask.g.instrument = "XPP"
+            self.assertTrue(security.authentication_required(part("Authenticated...."))())
+            self.assertTrue(security.authorization_required("read")(part)("Authorized", **{'experiment_name':'restricted_experiment'}))
+            self.assertTrue(security.authorization_required("edit")(part)("Authorized", **{'experiment_name':'restricted_experiment'}))
+
+        with app.test_request_context('/'):
+            flask.request.environ["HTTP_REMOTE_USER"] = "specific_restricted_reader"
+            flask.g.instrument = "XPP"
+            self.assertTrue(security.authentication_required(part("Authenticated...."))())
+            self.assertTrue(security.authorization_required("read")(part)("Authorized", **{'experiment_name':'restricted_experiment'}))
+            with self.assertRaises(HTTPException) as http_error:
+                self.assertFalse(security.authorization_required("edit")(part)("Authorized", **{'experiment_name':'restricted_experiment'}))
+                self.assertEqual(http_error.exception.code, 403)
+
+        with app.test_request_context('/'):
+            flask.request.environ["HTTP_REMOTE_USER"] = "xpp_instrment_operator"
+            flask.g.instrument = "XPP"
+            with self.assertRaises(HTTPException) as http_error:
+                self.assertFalse(security.authorization_required("read")(part)("Authorized", **{'experiment_name':'restricted_experiment'}))
+                self.assertEqual(http_error.exception.code, 403)
+            with self.assertRaises(HTTPException) as http_error:
+                self.assertFalse(security.authorization_required("edit")(part)("Authorized", **{'experiment_name':'restricted_experiment'}))
+                self.assertEqual(http_error.exception.code, 403)
+
+        with app.test_request_context('/'):
+            flask.request.environ["HTTP_REMOTE_USER"] = "ps_global_editors"
+            flask.g.instrument = "XPP"
+            with self.assertRaises(HTTPException) as http_error:
+                self.assertFalse(security.authorization_required("read")(part)("Authorized", **{'experiment_name':'restricted_experiment'}))
+                self.assertEqual(http_error.exception.code, 403)
+            with self.assertRaises(HTTPException) as http_error:
+                self.assertFalse(security.authorization_required("edit")(part)("Authorized", **{'experiment_name':'restricted_experiment'}))
+                self.assertEqual(http_error.exception.code, 403)
