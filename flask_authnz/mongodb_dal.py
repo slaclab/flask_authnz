@@ -54,7 +54,9 @@ class MongoDBRoles(object):
         """
         is_restricted = False
         if experiment_name:
-            is_restricted = json.loads(self.mongoclient[experiment_name]["info"].find_one({}).get("params", {}).get("is_restricted", "False").lower())
+            exp_info = self.mongoclient[experiment_name]["info"].find_one({})
+            if exp_info:
+                is_restricted = json.loads(exp_info.get("params", {}).get("is_restricted", "False").lower())
 
         role_players = set()
         if is_restricted:
