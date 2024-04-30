@@ -16,13 +16,14 @@ class MongoDBRoles(object):
     """
 
 
-    def __init__(self, mongoclient, usergroupsgetter):
+    def __init__(self, mongoclient, usergroupsgetter, rolesdbname="site"):
         """
         :param mongoclient: The PyMongo client to use.
         :return:
         """
         self.mongoclient = mongoclient
         self.usergroupsgetter = usergroupsgetter
+        self.rolesdbname = rolesdbname
 
     def getPrivilegesForApplicationRoles(self, application_name):
         """
@@ -33,7 +34,7 @@ class MongoDBRoles(object):
         """
         # Privileges are stored in the roles database
         priv2roles = {}
-        for role in self.mongoclient["site"]["roles"].find({"app": application_name}):
+        for role in self.mongoclient[self.rolesdbname]["roles"].find({"app": application_name}):
             role_name = role["name"]
             privileges = role.get("privileges", [])
             for privilege in privileges:
@@ -62,7 +63,7 @@ class MongoDBRoles(object):
         if is_restricted:
             logger.info("%s is restricted; skipping adding global roles", experiment_name)
         else:
-            for role in self.mongoclient["site"]["roles"].find({"app": application_name, "name": role_name}):
+            for role in self.mongoclient[self.rolesdbname]["roles"].find({"app": application_name, "name": role_name}):
                 for player in role.get("players", []):
                     role_players.add(player)
         if experiment_name:
@@ -73,7 +74,7 @@ class MongoDBRoles(object):
             logger.info("%s is restricted; skipping adding instrument roles", experiment_name)
         else:
             if instrument:
-                instr_obj = self.mongoclient["site"]["instruments"].find_one({"_id": instrument})
+                instr_obj = self.mongoclient[self.rolesdbname]["instruments"].find_one({"_id": instrument})
                 if instr_obj:
                     for in_role in instr_obj.get("roles", []):
                         if in_role.get("app", None) == application_name and in_role.get("name", None) == role_name:
