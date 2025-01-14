@@ -78,10 +78,10 @@ class UserGroups(object):
         """
         retval = []
         current_obj = OrderedDict()
-        comment_re = re.compile("^#.*$")
-        blank_line_re = re.compile("^\s*$")
-        n_v_line = re.compile("^(\w*):(.*)$")
-        for line in response.split("\n"):
+        comment_re = re.compile(r"^#.*$")
+        blank_line_re = re.compile(r"^\s*$")
+        n_v_line = re.compile(r"^(\w*):(.*)$")
+        for line in response.split(r"\n"):
             if comment_re.match(line):
                 continue
             elif blank_line_re.match(line):
