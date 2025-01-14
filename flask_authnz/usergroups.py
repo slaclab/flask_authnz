@@ -81,7 +81,7 @@ class UserGroups(object):
         comment_re = re.compile(r"^#.*$")
         blank_line_re = re.compile(r"^\s*$")
         n_v_line = re.compile(r"^(\w*):(.*)$")
-        for line in response.split(r"\n"):
+        for line in response.split("\n"):
             if comment_re.match(line):
                 continue
             elif blank_line_re.match(line):
