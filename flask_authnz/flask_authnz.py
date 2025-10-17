@@ -82,9 +82,10 @@ class FlaskAuthnz(object):
     def get_current_user_id(self):
         """
         Get the user id from the proxy.
+        If this is behind vouch, set FLASK_AUTHNZ_USER_HEADER to X-Vouch-Idp-Claims-Name
         :return: User id in the proxy header.
         """
-        remote_user = request.environ.get(os.environ.get("FLASK_AUTHNZ_USER_HEADER", "HTTP_REMOTE_USER"), None)
+        remote_user = request.headers.get(os.environ.get("FLASK_AUTHNZ_USER_HEADER", "REMOTE_USER"), None)
         if remote_user and '@' in remote_user:
             remote_user = remote_user.split("@")[0]
         return remote_user
