@@ -143,7 +143,7 @@ class FlaskAuthnz(object):
                     )
                 )
                 return True
-        logger.warn(
+        logger.warning(
             "Did not find any role with privilege %s for user %s for experiment %s"
             % (priv_name, self.get_current_user_id(), experiment_name)
         )
