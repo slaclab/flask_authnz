@@ -2,7 +2,7 @@ import os
 import logging
 from functools import wraps
 
-from flask import request, jsonify, url_for, abort, session, g
+from flask import request, url_for, abort, session, g
 from werkzeug.utils import redirect
 
 __author__ = 'andrej.babic@cosylab.com'

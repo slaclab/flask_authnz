@@ -1,5 +1,4 @@
 import logging
-from cachetools import TTLCache
 import json
 
 logger = logging.getLogger(__name__)
@@ -110,7 +109,7 @@ class MongoDBRoles(object):
 
         try:
             user_groups = self.usergroupsgetter.get_user_posix_groups(user_id)
-        except ValueError as e:
+        except ValueError:
             logger.exception("Exception when trying to determine groups for user %s" % (user_id))
             return False
 

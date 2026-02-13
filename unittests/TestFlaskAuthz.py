@@ -1,6 +1,5 @@
 import unittest
 import logging
-import sys
 import flask
 
 from flask_authnz.mongodb_dal import MongoDBRoles

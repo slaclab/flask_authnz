@@ -2,7 +2,6 @@
 import unittest
 import sys
 import argparse
-import os
 import logging
 
 def suite():
