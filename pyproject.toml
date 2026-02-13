@@ -12,7 +12,10 @@ license = {text = "MIT"}
 authors = [
     {name = "Murali Shankar", email = "mshankar@slac.stanford.edu"}
 ]
-dependencies = []
+dependencies = [
+    "cachetools",
+    "flask",
+]
 
 [project.urls]
 Homepage = "https://github.com/slaclab/flask_authnz.git"
