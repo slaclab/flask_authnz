@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flask-authnz"
+version = "0.0.24"
+description = "A small utility for authentication/authorization for flask based services"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Murali Shankar", email = "mshankar@slac.stanford.edu"}
+]
+dependencies = [
+    "cachetools",
+    "flask",
+]
+
+[project.urls]
+Homepage = "https://github.com/slaclab/flask_authnz.git"
+
+[tool.setuptools]
+packages = ["flask_authnz"]
+zip-safe = false
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.1",
+]
