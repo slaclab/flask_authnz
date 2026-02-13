@@ -1,11 +1,11 @@
 version = 1
 revision = 3
-requires-python = ">=3.14"
+requires-python = ">=3.8"
 
 [[package]]
 name = "flask-authnz"
-version = "0.1.0"
-source = { virtual = "." }
+version = "0.0.24"
+source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [
