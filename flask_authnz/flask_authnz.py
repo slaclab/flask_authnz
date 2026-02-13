@@ -116,7 +116,7 @@ class FlaskAuthnz(object):
         """
         Get the list of roles stored in the flask session
         """
-        session_app_roles = session.get(self.session_roles_name, {})
+        _ = session.get(self.session_roles_name, {}) # TODO: this is unused
 
     def __authorize_slac_user_for_experiment(self, application_role, experiment_name=None, instrument=None):
         """
