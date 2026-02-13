@@ -14,7 +14,6 @@ class MongoDBRoles(object):
     Thus, authz requires a user that can read the "roles" collection in all databases.
     """
 
-
     def __init__(self, mongoclient, usergroupsgetter, rolesdbname="site"):
         """
         :param mongoclient: The PyMongo client to use.
@@ -33,7 +32,9 @@ class MongoDBRoles(object):
         """
         # Privileges are stored in the roles database
         priv2roles = {}
-        for role in self.mongoclient[self.rolesdbname]["roles"].find({"app": application_name}):
+        for role in self.mongoclient[self.rolesdbname]["roles"].find(
+            {"app": application_name}
+        ):
             role_name = role["name"]
             privileges = role.get("privileges", [])
             for privilege in privileges:
@@ -42,7 +43,14 @@ class MongoDBRoles(object):
                 priv2roles[privilege].add(role_name)
         return priv2roles
 
-    def has_slac_user_role(self, user_id, application_name, role_name, experiment_name=None, instrument=None):
+    def has_slac_user_role(
+        self,
+        user_id,
+        application_name,
+        role_name,
+        experiment_name=None,
+        instrument=None,
+    ):
         """
         Check if SLAC user has the appropriate role in the application.
         :param user_id: User id to verify.
@@ -56,66 +64,78 @@ class MongoDBRoles(object):
         if experiment_name:
             exp_info = self.mongoclient[experiment_name]["info"].find_one({})
             if exp_info:
-                is_restricted = json.loads(exp_info.get("params", {}).get("is_restricted", "False").lower())
+                is_restricted = json.loads(
+                    exp_info.get("params", {}).get("is_restricted", "False").lower()
+                )
 
         role_players = set()
         if is_restricted:
-            logger.info("%s is restricted; skipping adding global roles", experiment_name)
+            logger.info(
+                "%s is restricted; skipping adding global roles", experiment_name
+            )
         else:
-            for role in self.mongoclient[self.rolesdbname]["roles"].find({"app": application_name, "name": role_name}):
+            for role in self.mongoclient[self.rolesdbname]["roles"].find(
+                {"app": application_name, "name": role_name}
+            ):
                 for player in role.get("players", []):
                     role_players.add(player)
         if experiment_name:
-            for role in self.mongoclient[experiment_name]["roles"].find({"app": application_name, "name": role_name}):
+            for role in self.mongoclient[experiment_name]["roles"].find(
+                {"app": application_name, "name": role_name}
+            ):
                 for player in role.get("players", []):
                     role_players.add(player)
         if is_restricted:
-            logger.info("%s is restricted; skipping adding instrument roles", experiment_name)
+            logger.info(
+                "%s is restricted; skipping adding instrument roles", experiment_name
+            )
         else:
             if instrument:
-                instr_obj = self.mongoclient[self.rolesdbname]["instruments"].find_one({"_id": instrument})
+                instr_obj = self.mongoclient[self.rolesdbname]["instruments"].find_one(
+                    {"_id": instrument}
+                )
                 if instr_obj:
                     for in_role in instr_obj.get("roles", []):
-                        if in_role.get("app", None) == application_name and in_role.get("name", None) == role_name:
+                        if (
+                            in_role.get("app", None) == application_name
+                            and in_role.get("name", None) == role_name
+                        ):
                             for player in in_role.get("players", []):
                                 role_players.add(player)
 
-
         # Check if the user is directly mentioned in the database.
-        if "uid:"+user_id in role_players:
-            logger.info("User_id='%s' directly has role '%s' in application '%s' for experiment '%s'."
-                          % (user_id,
-                             role_name,
-                             application_name,
-                             experiment_name))
+        if "uid:" + user_id in role_players:
+            logger.info(
+                "User_id='%s' directly has role '%s' in application '%s' for experiment '%s'."
+                % (user_id, role_name, application_name, experiment_name)
+            )
             return True
-
 
         authorized_groups = [x for x in role_players if not x.startswith("uid:")]
 
-
         # There are no role groups for this application.
         if not authorized_groups:
-            logger.debug("User_id='%s' is not authorized for role '%s' on application '%s'. "
-                          "No authorized groups for this role either." % (user_id, role_name,
-                                                                          application_name))
+            logger.debug(
+                "User_id='%s' is not authorized for role '%s' on application '%s'. "
+                "No authorized groups for this role either."
+                % (user_id, role_name, application_name)
+            )
             return False
 
-        logger.debug("These groups '%s' are authorized for role '%s' in application '%s' for experiment '%s'."
-                      % (authorized_groups,
-                         role_name,
-                         application_name,
-                         experiment_name))
+        logger.debug(
+            "These groups '%s' are authorized for role '%s' in application '%s' for experiment '%s'."
+            % (authorized_groups, role_name, application_name, experiment_name)
+        )
 
         try:
             user_groups = self.usergroupsgetter.get_user_posix_groups(user_id)
         except ValueError:
-            logger.exception("Exception when trying to determine groups for user %s" % (user_id))
+            logger.exception(
+                "Exception when trying to determine groups for user %s" % (user_id)
+            )
             return False
 
-        logger.debug("User '%s' belongs to these groups '%s'"
-                      % (user_id,
-                         user_groups))
+        logger.debug("User '%s' belongs to these groups '%s'" % (user_id, user_groups))
 
         # Check if the user is in any posix group specified on the application.
         return bool(set(user_groups) & set(authorized_groups))
